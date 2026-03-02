@@ -1,78 +1,64 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
-import { submitVote } from "@/app/actions";
-import UploadCaptionPipeline from "@/components/UploadCaptionPipeline";
+import VoteFeed from "@/components/VoteFeed";
+
+type CaptionRow = {
+  id: string;
+  content: string | null;
+  image_id: string | null;
+};
+
+type ImageRow = Record<string, any>;
+
+function pickUrl(row: ImageRow): string | null {
+  return row.image_url ?? row.cdn_url ?? row.url ?? row.public_url ?? null;
+}
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!user) redirect("/login");
 
-  const { data, error } = await supabase.from("captions").select("*").limit(30);
+  const { data: captions, error: capErr } = await supabase
+    .from("captions")
+    .select("id, content, image_id")
+    .limit(100);
 
-  if (error) {
+  if (capErr) {
     return (
       <main className="page">
         <h1 className="title">Protected Page</h1>
-        <p className="subtitle">Logged in as: {user.email}</p>
-        <p style={{ color: "crimson" }}>Error: {error.message}</p>
+        <p style={{ color: "crimson" }}>{capErr.message}</p>
       </main>
     );
   }
 
-  const captions = data ?? [];
+  // Try common image table name.
+  const { data: images } = await supabase.from("images").select("*").limit(500);
+
+  const imageById = new Map<string, string>();
+  (images ?? []).forEach((r: ImageRow) => {
+    const id = String(r.id ?? "");
+    const url = pickUrl(r);
+    if (id && url) imageById.set(id, url);
+  });
+
+  const feedItems = ((captions ?? []) as CaptionRow[]).map((c) => ({
+    id: c.id,
+    content: c.content,
+    image_id: c.image_id,
+    imageUrl: c.image_id ? imageById.get(c.image_id) ?? null : null,
+  }));
 
   return (
     <main className="page">
       <h1 className="title">Protected Page</h1>
       <p className="subtitle">Logged in as: {user.email}</p>
       <a href="/logout">Logout</a>
-
-      <UploadCaptionPipeline />
-
-      <section style={{ maxWidth: 900, margin: "1rem auto" }}>
-        <h2>Rate Captions (HW4)</h2>
-
-        {captions.map((row: any) => (
-          <article
-            key={row.id ?? JSON.stringify(row)}
-            style={{
-              background: "white",
-              border: "1px solid #dbe3ef",
-              borderRadius: 12,
-              padding: 16,
-              marginBottom: 16,
-            }}
-          >
-            {row.image_url && (
-              <img
-                src={row.image_url}
-                alt="caption image"
-                style={{ width: "100%", maxHeight: 360, objectFit: "cover", borderRadius: 8, marginBottom: 12 }}
-              />
-            )}
-
-            <p style={{ marginBottom: 12 }}>
-              {row.content ?? row.caption_text ?? "(no text column found)"}
-            </p>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <form action={submitVote}>
-                <input type="hidden" name="caption_id" value={row.id} />
-                <input type="hidden" name="vote_value" value="1" />
-                <button type="submit" className="btn btn-up">Upvote</button>
-              </form>
-
-              <form action={submitVote}>
-                <input type="hidden" name="caption_id" value={row.id} />
-                <input type="hidden" name="vote_value" value="-1" />
-                <button type="submit" className="btn btn-down">Downvote</button>
-              </form>
-            </div>
-          </article>
-        ))}
-      </section>
+       <VoteFeed captions={feedItems} />
     </main>
   );
 }
-

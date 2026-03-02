@@ -1,0 +1,7 @@
+const seen = new Set<string>();
+const uniqueFeedItems = feedItems.filter((x) => {
+  const key = x.image_id ?? x.id;
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
