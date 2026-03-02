@@ -1,25 +1,38 @@
-import VoteFeed from "@/components/VoteFeed";
+import { supabase } from "@/lib/supabase";
 
-const demoCaptions = [
-  {
-    id: 1,
-    caption_text: "When the deadline is tonight and your laptop updates now.",
-    image_url: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=1200&auto=format&fit=crop",
-  },
-  {
-    id: 2,
-    caption_text: "Me pretending this bug is a feature.",
-    image_url: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=1200&auto=format&fit=crop",
-  },
-];
+export default async function HomePage() {
+  const { data, error } = await supabase.from("captions").select("*").limit(20);
 
-export default function HomePage() {
+  if (error) {
+    return (
+      <main className="page">
+        <h1 className="title">Supabase Error</h1>
+        <p>{error.message}</p>
+      </main>
+    );
+  }
+
   return (
     <main className="page">
-      <h1 className="title">Humor Vote Lab</h1>
-      <p className="subtitle">Upvote celebrates. Downvote drops.</p>
-      <VoteFeed captions={demoCaptions} />
+      <h1 className="title">Caption List (HW2)</h1>
+      <p className="subtitle">Loaded from Supabase</p>
+
+      <section style={{ maxWidth: 900, margin: "0 auto" }}>
+        {data?.map((row: any) => (
+          <article
+            key={row.id ?? JSON.stringify(row)}
+            style={{
+              background: "white",
+              border: "1px solid #dbe3ef",
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(row, null, 2)}</pre>
+          </article>
+        ))}
+      </section>
     </main>
   );
 }
-
