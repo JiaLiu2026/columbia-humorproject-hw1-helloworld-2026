@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { submitVote } from "@/app/actions";
+import UploadCaptionPipeline from "@/components/UploadCaptionPipeline";
 
 type Caption = {
   id: string;
@@ -33,11 +34,14 @@ export default async function ProtectedPage() {
 
   return (
     <main className="page">
-      <h1 className="title">Rate Captions (HW4)</h1>
+      <h1 className="title">Protected Page</h1>
       <p className="subtitle">Logged in as: {user.email}</p>
       <a href="/logout">Logout</a>
 
+      <UploadCaptionPipeline />
+
       <section style={{ maxWidth: 900, margin: "1rem auto" }}>
+        <h2>Rate Captions (HW4)</h2>
         {captions.map((c) => (
           <article
             key={c.id}
@@ -70,5 +74,4 @@ export default async function ProtectedPage() {
     </main>
   );
 }
-
 
