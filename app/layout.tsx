@@ -1,6 +1,9 @@
-export const metadata = {
-  title: "Humor Project",
-  description: "Supabase HW2",
+import "./globals.css";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Humor Vote Lab",
+  description: "Caption voting app",
 };
 
 export default function RootLayout({
@@ -14,4 +17,3 @@ export default function RootLayout({
     </html>
   );
 }
-

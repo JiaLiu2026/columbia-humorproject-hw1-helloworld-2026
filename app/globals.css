@@ -1,0 +1,102 @@
+.page {
+  min-height: 100vh;
+  padding: 2rem 1rem 3rem;
+  background:
+    radial-gradient(circle at 15% 20%, #ffe7cf 0%, transparent 35%),
+    radial-gradient(circle at 85% 10%, #d9f5ff 0%, transparent 32%),
+    linear-gradient(160deg, #f8f9fc 0%, #edf4ff 100%);
+}
+
+.title {
+  text-align: center;
+  font-size: clamp(1.8rem, 3.2vw, 2.7rem);
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  text-align: center;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.vote-shell {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.vote-card {
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 18px;
+  box-shadow: 0 15px 40px rgba(17, 24, 39, 0.08);
+  padding: 1rem;
+  transform: translateY(0);
+}
+
+.vote-image {
+  width: 100%;
+  height: min(55vh, 460px);
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.vote-caption {
+  margin-top: 0.9rem;
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.vote-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.7rem 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-down {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-up {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.fly-down {
+  animation: dropAway 680ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.fly-up {
+  animation: riseAway 680ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes dropAway {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(120vh) rotate(16deg); opacity: 0.1; }
+}
+
+@keyframes riseAway {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-120vh) scale(1.05); opacity: 0.1; }
+}
+
+.done {
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+}
