@@ -30,13 +30,12 @@ export default async function ProtectedPage() {
   if (capErr) {
     return (
       <main className="page">
-        <h1 className="title">Protected Page</h1>
-        <p style={{ color: "crimson" }}>{capErr.message}</p>
+        <h1 className="title">Caption Rater</h1>
+        <p style={{ color: "#e94560", textAlign: "center" }}>{capErr.message}</p>
       </main>
     );
   }
 
-  // Try common image table name.
   const { data: images } = await supabase.from("images").select("*").limit(500);
 
   const imageById = new Map<string, string>();
@@ -55,10 +54,14 @@ export default async function ProtectedPage() {
 
   return (
     <main className="page">
-      <h1 className="title">Protected Page</h1>
-      <p className="subtitle">Logged in as: {user.email}</p>
-      <a href="/logout">Logout</a>
-       <VoteFeed captions={feedItems} />
+      <h1 className="title">Caption Rater</h1>
+      <p className="subtitle">
+        Logged in as {user.email}
+      </p>
+      <a href="/logout" className="logout-link">
+        Sign out
+      </a>
+      <VoteFeed captions={feedItems} />
     </main>
   );
 }
