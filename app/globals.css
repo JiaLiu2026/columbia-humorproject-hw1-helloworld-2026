@@ -1,14 +1,30 @@
 /* ── Base Reset ───────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; }
 
-/* ── Page Shell (protected) ──────────────────── */
+/* ── Page Shell ──────────────────────────────── */
 .page {
   min-height: 100vh;
   padding: 2rem 1rem 4rem;
   background: linear-gradient(160deg, #0d0f17 0%, #131729 40%, #1a1040 100%);
   color: #e4e5eb;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
 }
+
+/* Subtle animated grain overlay for texture */
+.page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(255,107,138,0.06) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(108,99,255,0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 90%, rgba(67,170,139,0.04) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page > * { position: relative; z-index: 1; }
 
 /* ── Typography ──────────────────────────────── */
 .title {
@@ -26,7 +42,7 @@
 .subtitle {
   text-align: center;
   color: #8b8fa3;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   font-size: 0.95rem;
 }
 
@@ -42,10 +58,163 @@
 }
 .logout-link:hover { color: #ff6b8a; }
 
-/* ── Vote Shell ──────────────────────────────── */
+/* ── Three-column vote layout ────────────────── */
+.vote-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 520px) 1fr;
+  gap: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .vote-layout {
+    grid-template-columns: 1fr;
+    max-width: 520px;
+  }
+  .vote-sidebar { display: none; }
+}
+
+/* ── Sidebars ────────────────────────────────── */
+.vote-sidebar {
+  position: sticky;
+  top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 2.5rem;
+}
+
+.sidebar-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  backdrop-filter: blur(12px);
+}
+
+.sidebar-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #555a70;
+  margin-bottom: 0.75rem;
+}
+
+.sidebar-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #e4e5eb;
+  min-width: 2ch;
+}
+
+.stat-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.tag-green { background: rgba(67,170,139,0.15); color: #43aa8b; }
+.tag-red   { background: rgba(233,69,96,0.15); color: #e94560; }
+
+/* Progress ring */
+.progress-ring-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.progress-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+.progress-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.06);
+  stroke-width: 6;
+}
+
+.progress-fill {
+  fill: none;
+  stroke: url(#prog-grad);
+  stroke: #ff6b8a;
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.progress-text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #8b8fa3;
+}
+
+/* Keyboard shortcut hints */
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+  color: #8b8fa3;
+  font-size: 0.85rem;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 1.8rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ccc;
+  font-family: inherit;
+}
+
+.tip-text {
+  font-size: 0.82rem;
+  color: #6b6f85;
+  line-height: 1.5;
+}
+
+/* ── Vote Shell (center column) ──────────────── */
 .vote-shell {
   max-width: 520px;
   margin: 0 auto;
+  width: 100%;
+}
+
+/* ── Progress bar ────────────────────────────── */
+.progress-bar-track {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 99px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b8a, #ffa14e);
+  border-radius: 99px;
+  transition: width 0.5s ease;
 }
 
 /* ── Vote Card ───────────────────────────────── */
@@ -117,6 +286,8 @@
   letter-spacing: 0.01em;
 }
 
+.btn-icon { font-size: 1.25rem; }
+
 .btn:hover:not(:disabled) { transform: scale(1.06); }
 .btn:active:not(:disabled) { transform: scale(0.96); }
 
@@ -178,32 +349,36 @@
   border-color: rgba(67, 170, 139, 0.3);
 }
 
-/* ── Card counter / progress ─────────────────── */
+/* ── Card counter ────────────────────────────── */
 .card-counter {
   text-align: center;
-  color: #555;
-  font-size: 0.8rem;
+  color: #444;
+  font-size: 0.78rem;
   margin-top: 0.75rem;
   letter-spacing: 0.04em;
 }
 
 /* ── Fly Animations ──────────────────────────── */
-.fly-down {
-  animation: dropAway 680ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
-}
-
 .fly-up {
   animation: riseAway 680ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
-}
-
-@keyframes dropAway {
-  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(120vh) rotate(16deg); opacity: 0; }
 }
 
 @keyframes riseAway {
   0%   { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(-120vh) scale(1.05); opacity: 0; }
+}
+
+/* ── Balloon Pop: shrink + shake then drop ───── */
+.fly-down.balloon-pop {
+  animation: balloonPop 750ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes balloonPop {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  15%  { transform: scale(1.08) rotate(-2deg); opacity: 1; }
+  25%  { transform: scale(0.4) rotate(3deg); opacity: 0.7; }
+  35%  { transform: scale(0.35) rotate(-1deg); opacity: 0.5; }
+  100% { transform: scale(0.2) translateY(60vh) rotate(12deg); opacity: 0; }
 }
 
 /* ── Entrance animation ──────────────────────── */
@@ -217,16 +392,56 @@
 }
 
 /* ── Done State ──────────────────────────────── */
-.done {
+.done-wrapper {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 3rem 1rem;
+}
+
+.done-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
   text-align: center;
-  font-weight: 600;
-  color: #8b8fa3;
-  font-size: 1.1rem;
-  padding: 4rem 1rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .done-emoji {
   display: block;
-  font-size: 3rem;
+  font-size: 3.5rem;
   margin-bottom: 0.75rem;
 }
+
+.done-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f0f0f5;
+  margin-bottom: 0.3rem;
+}
+
+.done-sub {
+  color: #8b8fa3;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+}
+
+.done-stats {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.stat-liked  { background: rgba(67,170,139,0.15); color: #43aa8b; }
+.stat-skipped { background: rgba(233,69,96,0.15); color: #e94560; }

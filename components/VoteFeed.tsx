@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { createClient } from "@/lib/supabase-browser";
 
@@ -13,12 +13,43 @@ type Item = {
 
 type Fly = "none" | "up" | "down";
 
+/* ── Balloon pop: spawn falling balloon fragments ─────── */
+function spawnBalloonPop() {
+  // Burst of red/pink "popped balloon" particles that fall down
+  confetti({
+    particleCount: 60,
+    startVelocity: 25,
+    spread: 160,
+    origin: { x: 0.5, y: 0.5 },
+    gravity: 1.8,
+    ticks: 120,
+    colors: ["#e94560", "#ff6b8a", "#c1121f", "#ff8fa3", "#800020"],
+    shapes: ["circle"],
+    scalar: 1.1,
+  });
+  // A second burst slightly delayed for a layered effect
+  setTimeout(() => {
+    confetti({
+      particleCount: 30,
+      startVelocity: 15,
+      spread: 120,
+      origin: { x: 0.5, y: 0.55 },
+      gravity: 2.2,
+      ticks: 100,
+      colors: ["#e94560", "#ff6b8a", "#ffa0b4"],
+      shapes: ["circle"],
+      scalar: 0.7,
+    });
+  }, 80);
+}
+
 export default function VoteFeed({ captions }: { captions: Item[] }) {
   const supabase = useMemo(() => createClient(), []);
   const [idx, setIdx] = useState(0);
   const [fly, setFly] = useState<Fly>("none");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [stats, setStats] = useState({ liked: 0, skipped: 0 });
 
   const current = captions[idx];
 
@@ -54,9 +85,13 @@ export default function VoteFeed({ captions }: { captions: Item[] }) {
         origin: { y: 0.65 },
         colors: ["#ff6b8a", "#ffa14e", "#43aa8b", "#90be6d", "#6c63ff"],
       });
+      setStats((s) => ({ ...s, liked: s.liked + 1 }));
+    } else {
+      spawnBalloonPop();
+      setStats((s) => ({ ...s, skipped: s.skipped + 1 }));
     }
-    setFly(v === 1 ? "up" : "down");
 
+    setFly(v === 1 ? "up" : "down");
     insertVote(current.id, v);
 
     setTimeout(() => {
@@ -90,12 +125,38 @@ export default function VoteFeed({ captions }: { captions: Item[] }) {
     );
   }
 
+  /* ── Keyboard shortcuts ── */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "ArrowLeft" || e.key === "a") onVote(-1);
+      if (e.key === "ArrowRight" || e.key === "d") onVote(1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  const total = captions.length;
+  const progress = total > 0 ? ((idx) / total) * 100 : 0;
+
   if (!current)
     return (
-      <p className="done">
-        <span className="done-emoji">&#127881;</span>
-        You've rated all the captions!
-      </p>
+      <div className="done-wrapper">
+        <div className="done-card">
+          <span className="done-emoji">&#127881;</span>
+          <p className="done-title">All done!</p>
+          <p className="done-sub">
+            You rated {total} caption{total !== 1 ? "s" : ""}
+          </p>
+          <div className="done-stats">
+            <span className="stat-chip stat-liked">
+              &#x1F44D; {stats.liked} liked
+            </span>
+            <span className="stat-chip stat-skipped">
+              &#x1F44E; {stats.skipped} skipped
+            </span>
+          </div>
+        </div>
+      </div>
     );
 
   const imageSrc =
@@ -107,62 +168,124 @@ export default function VoteFeed({ captions }: { captions: Item[] }) {
   const cardClass = [
     "vote-card",
     fly === "up" ? "fly-up" : "",
-    fly === "down" ? "fly-down" : "",
+    fly === "down" ? "fly-down balloon-pop" : "",
     fly === "none" ? "card-enter" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <section className="vote-shell">
-      <article className={cardClass} key={idx}>
-        {imageSrc ? (
-          <img src={imageSrc} alt="caption image" className="vote-image" />
-        ) : (
-          <div className="image-placeholder">
-            No image available
+    <div className="vote-layout">
+      {/* ── Left sidebar: session stats ── */}
+      <aside className="vote-sidebar sidebar-left">
+        <div className="sidebar-box">
+          <p className="sidebar-label">Session</p>
+          <div className="sidebar-stat">
+            <span className="stat-num">{stats.liked}</span>
+            <span className="stat-tag tag-green">Liked</span>
           </div>
-        )}
+          <div className="sidebar-stat">
+            <span className="stat-num">{stats.skipped}</span>
+            <span className="stat-tag tag-red">Skipped</span>
+          </div>
+        </div>
+        <div className="sidebar-box">
+          <p className="sidebar-label">Progress</p>
+          <div className="progress-ring-wrapper">
+            <svg className="progress-ring" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="34" className="progress-track" />
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                className="progress-fill"
+                style={{
+                  strokeDasharray: `${2 * Math.PI * 34}`,
+                  strokeDashoffset: `${2 * Math.PI * 34 * (1 - progress / 100)}`,
+                }}
+              />
+            </svg>
+            <span className="progress-text">{idx}/{total}</span>
+          </div>
+        </div>
+      </aside>
 
-        <p className="vote-caption">
-          &ldquo;{current.content ?? "(no content)"}&rdquo;
+      {/* ── Center: main card ── */}
+      <section className="vote-shell">
+        {/* Progress bar */}
+        <div className="progress-bar-track">
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+
+        <article className={cardClass} key={idx}>
+          {imageSrc ? (
+            <img src={imageSrc} alt="caption image" className="vote-image" />
+          ) : (
+            <div className="image-placeholder">No image available</div>
+          )}
+
+          <p className="vote-caption">
+            &ldquo;{current.content ?? "(no content)"}&rdquo;
+          </p>
+
+          <div className="vote-actions">
+            <button
+              disabled={busy}
+              className="btn btn-down"
+              onClick={() => onVote(-1)}
+            >
+              <span className="btn-icon">&#x1F388;</span> Pop
+            </button>
+            <button
+              disabled={busy}
+              className="btn btn-up"
+              onClick={() => onVote(1)}
+            >
+              <span className="btn-icon">&#x1F44D;</span> Funny!
+            </button>
+          </div>
+
+          <div className="share-row">
+            <button
+              className={`share-btn ${copied ? "copied" : ""}`}
+              onClick={handleCopyLink}
+            >
+              {copied ? "\u2713 Copied" : "\u{1F517} Copy Link"}
+            </button>
+            <button className="share-btn" onClick={handleShareTwitter}>
+              &#x1D54F; Share
+            </button>
+          </div>
+        </article>
+
+        <p className="card-counter">
+          {idx + 1} of {total} &middot; Use arrow keys to vote
         </p>
+      </section>
 
-        {/* ── Large, prominent vote buttons ── */}
-        <div className="vote-actions">
-          <button
-            disabled={busy}
-            className="btn btn-down"
-            onClick={() => onVote(-1)}
-          >
-            <span style={{ fontSize: "1.25rem" }}>&#x1F44E;</span> Skip
-          </button>
-          <button
-            disabled={busy}
-            className="btn btn-up"
-            onClick={() => onVote(1)}
-          >
-            <span style={{ fontSize: "1.25rem" }}>&#x1F44D;</span> Funny!
-          </button>
+      {/* ── Right sidebar: tips / keyboard hints ── */}
+      <aside className="vote-sidebar sidebar-right">
+        <div className="sidebar-box">
+          <p className="sidebar-label">Shortcuts</p>
+          <div className="shortcut-row">
+            <kbd className="kbd">&larr;</kbd>
+            <span>Pop / skip</span>
+          </div>
+          <div className="shortcut-row">
+            <kbd className="kbd">&rarr;</kbd>
+            <span>Funny!</span>
+          </div>
         </div>
-
-        {/* ── Social sharing row ── */}
-        <div className="share-row">
-          <button
-            className={`share-btn ${copied ? "copied" : ""}`}
-            onClick={handleCopyLink}
-          >
-            {copied ? "\u2713 Copied" : "\u{1F517} Copy Link"}
-          </button>
-          <button className="share-btn" onClick={handleShareTwitter}>
-            &#x1D54F; Share
-          </button>
+        <div className="sidebar-box sidebar-tip">
+          <p className="sidebar-label">Tip</p>
+          <p className="tip-text">
+            Share your favorites with friends using the share buttons below each caption.
+          </p>
         </div>
-      </article>
-
-      <p className="card-counter">
-        {idx + 1} / {captions.length}
-      </p>
-    </section>
+      </aside>
+    </div>
   );
 }
